@@ -1,0 +1,68 @@
+import yfinance as yf
+import streamlit as st
+
+Ticker = st.text_input("Entrer le ticker d'une action :", "AAPL")
+Discount_Rate = st.number_input("Taux d'actualisation (%)","",min_value =0.0) / 100               ### ???
+Growth_Rate = st.number_input("Taux de croissance (%)", "",min_value =0.0) / 100                  ### ???
+
+choix = st.write("quel modèle souhaitez-vous utiliser ?")
+
+if st.button("Calculer la valeur intrinsèque avec un DDM") : 
+   try: 
+      Int_Value = discount_dividend_model(dividend, Growth_rate, Discount_Rate) 
+      st.success(f"La valeur intrinsèque de l'action est : {Int_Value:.2f} €")
+       
+      actual_price = stock_price (Ticker)
+      st.write(f"Cours actuel de l'action ({Ticker}) : {Current_Price:.2f} €")
+
+      recommendation = Inv_recommendation (Int_Value, Current_Price)
+      st.write(f"**Recommandation : {recommendation}**")
+
+   except ValueError as e:
+    st.error(f"Erreur : {e}", icon="⚠️")
+
+if st.button("Calculer la valeur intrinsèque avec un DCF") : 
+   try: 
+      Int_Value = discounted_cash_flow(FCF, Discount_Rate, Growth_Rate, periods = 5)
+      st.success(f"La valeur intrinsèque de l'action est : {Int_Value:.2f} €")
+      recommendation
+   except ValueError as e:
+    st.error(f"Erreur : {e}", icon="⚠️")
+
+
+def No_Erreur (Discount_Rate, Growth_Rate): 
+    if Growth_Rate >= Discount_Rate :
+       raise ValueError("Erreur : le taux de croissance doit être inferieur au taux d'actualisation.")
+
+def discounted_cash_flow(FCF, Discount_Rate, Growth_Rate, periods = 5) :
+    No_Erreur
+    DCF = sum([FCF * (1+Growth_Rate)**time / (1+Discount_Rate)**time for time in range (1, periods+1)])
+    TV = FCF * (1+Growth_Rate)**periods / (Discount_Rate - Growth_Rate) 
+    return DCF + TV
+
+def discount_dividend_model(dividend, Growth_rate, Discount_Rate) :
+    No_Erreur
+    Value = dividend * (1 + Growth_Rate) / (Discount_Rate - Growth_Rate)
+    return Value
+
+def stock_price (Ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        current_price = stock.history(period="1d")['Close'].iloc[-1] 
+        return Current_Price
+    except Exception as e:
+        raise ValueError(f"Impossible de récupérer les données pour le ticker {ticker}. Erreur : {e}")
+
+def Inv_recommendation (Int_Value, Current_Price):
+    if Current_Price < Int_Value * 0.9:  
+        return "Buy"
+    elif Current_Price > Int_Value * 1.1:  
+        return "Sell"
+    else:  
+        return "Hold"
+
+
+
+
+
+
