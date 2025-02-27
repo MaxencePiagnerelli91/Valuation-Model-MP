@@ -1,4 +1,6 @@
 import yfinance as yf
+import time
+time.sleep(2)
 
 
 Ticker = input("Entrer le ticker d'une action : ").strip().upper()
@@ -30,6 +32,16 @@ def stock_price (Ticker):
     except:
         print("Erreur de récuperation des données")
 
+def PE_Ratio (Ticker) :
+    s_price = stock_price(Ticker)
+    eps = s_price.info.get("trailingEps")
+    forward_eps = s_price.info.get("forwardEps") 
+
+    Actual_PE = s_price/eps
+    Forward_PE = s_price/forward_eps
+
+    print ("L'actuel PE Ratio est de" + str(Actual_PE) + "et le PE ratio futur est estimé à" + str(Forward_PE))
+
 def Inv_recommendation (Int_Value, Current_Price):
     if Current_Price < Int_Value * 0.9:  
         return "Buy"
@@ -37,6 +49,7 @@ def Inv_recommendation (Int_Value, Current_Price):
         return "Sell"
     else:  
         return "Hold"
+ 
 try:
         if dividends.empty:  
             print("Erreur : cette action ne verse pas de dividendes.")
@@ -54,13 +67,9 @@ try:
                 print("Cours actuel de l'action : " + str(Price) + "€")
                 recommendation = Inv_recommendation(Int_Value, Price)
                 print("Recommandation : " + str(recommendation))
+                print(str(PE_ratio(Ticker)))
                 
 except:
         print("Erreur de calcul DDM")
-        
-
-
-
-
 
 
