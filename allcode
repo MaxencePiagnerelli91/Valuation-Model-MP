@@ -1,13 +1,10 @@
 import yfinance as yf
-import time
-time.sleep(2)
-
 
 Ticker = input("Entrer le ticker d'une action : ").strip().upper()
 Discount_Rate = float(input("Taux d'actualisation (%) : ")) / 100
 Growth_Rate = float(input("Taux de croissance (%) : ")) / 100
 Thestock = yf.Ticker(Ticker)
-dividends = Thestock.dividends # récupère TOUS les dividendes
+
 
 
 def No_Erreur (Discount_Rate, Growth_Rate): 
@@ -21,8 +18,11 @@ def discounted_dividend_model(dividend, Growth_Rate, Discount_Rate) :
     Year3 = (Year2 * (1 + Growth_Rate)) / (1+Discount_Rate)
     Year4 = (Year3 * (1 + Growth_Rate)) / (1+Discount_Rate)
     Year5 = (Year4 * (1 + Growth_Rate)) / (1+Discount_Rate)
-    TV = (Year5 * (1 + Growth_Rate) )/ (Discount_Rate - Growth_Rate)
-    return TV
+    D6 = Year5 * (1 + Growth_Rate)  
+    TV = D6 / (Discount_Rate - Growth_Rate)  
+    TV_discounted = TV / (1 + Discount_Rate) ** 5
+    Sum = Year1 + Year2 + Year3 + Year4 + Year5 + TV_discounted
+    return Sum
 
 def stock_price (Ticker):
     try:
@@ -33,14 +33,13 @@ def stock_price (Ticker):
         print("Erreur de récuperation des données")
 
 def PE_Ratio (Ticker) :
-    s_price = stock_price(Ticker)
+    s_price = yf.Ticker(Ticker)
     eps = s_price.info.get("trailingEps")
-    forward_eps = s_price.info.get("forwardEps") 
 
-    Actual_PE = s_price/eps
-    Forward_PE = s_price/forward_eps
-
-    print ("L'actuel PE Ratio est de" + str(Actual_PE) + "et le PE ratio futur est estimé à" + str(Forward_PE))
+    if eps > 0 :
+        return stock_price(Ticker)/eps
+    else :
+        return "EPS indispo ou négatif"
 
 def Inv_recommendation (Int_Value, Current_Price):
     if Current_Price < Int_Value * 0.9:  
@@ -51,25 +50,26 @@ def Inv_recommendation (Int_Value, Current_Price):
         return "Hold"
  
 try:
-        if dividends.empty:  
-            print("Erreur : cette action ne verse pas de dividendes.")
-        else:
-            No_Erreur(Discount_Rate, Growth_Rate)
-            dividends_per_year = dividends.resample('YE').sum()  # Somme des dividendes par année
-            last_annual_dividend = dividends_per_year.iloc[-1] #prends le dernier qui sert de base
+    No_Erreur(Discount_Rate, Growth_Rate)
+    last_annual_dividend = Thestock.info.get("dividendRate")#prends le dernier qui sert de base
+
+    if last_annual_dividend is None or last_annual_dividend == 0:
+        print("l'action ne verse pas de dividende")
+
+    else : 
             print("Le dernier dividende annuel est de : " + str(last_annual_dividend) + "€")
             Int_Value = discounted_dividend_model(last_annual_dividend, Growth_Rate, Discount_Rate) 
-            
             print("La valeur intrinsèque de l'action est : " + str(Int_Value) + "€")
-
             Price = stock_price(Ticker)
             if Price is not None:
                 print("Cours actuel de l'action : " + str(Price) + "€")
+                PE_R = PE_Ratio (Ticker)
+                print("Le PE Ratio est de :"+str(PE_R))
                 recommendation = Inv_recommendation(Int_Value, Price)
                 print("Recommandation : " + str(recommendation))
-                print(str(PE_ratio(Ticker)))
                 
 except:
-        print("Erreur de calcul DDM")
+        print("erreur : le taux d'actualisation n'est pas supérieur au taux de croissance")
+        
 
 
